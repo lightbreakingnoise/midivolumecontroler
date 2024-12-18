@@ -1,1 +1,3 @@
 as soon as it has started, with your default midi controler, you should see Speakers, Microphone and sound producing apps. Just click in one of these lines, it should go red, then turn a knob/fader and it should go green. you can now change it's volume with this knob/fader. just right click in one line to remove a link.
+
+when you give RetroBar a try, you can see last volume change in your taskbar via window title.
