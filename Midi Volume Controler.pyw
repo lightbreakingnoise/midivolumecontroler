@@ -1,10 +1,13 @@
 import mido
+import mido.backends.pygame
 import time
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume
 import tkinter as tk
 import tkextrafont as tkfont
 import json
+
+os.chdir(os.getenv("TEMP"))
 
 global win
 win = tk.Tk()
