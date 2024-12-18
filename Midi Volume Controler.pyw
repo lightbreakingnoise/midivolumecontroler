@@ -6,20 +6,21 @@ from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume
 import tkinter as tk
 import tkextrafont as tkfont
 import json
-
-os.chdir(os.getenv("TEMP"))
+import os
 
 global win
 win = tk.Tk()
+global msize
+msize = 24
 global mainfont
-mainfont = tkfont.Font(file="doto.ttf", family="Doto", size=24, weight="bold")
+mainfont = tkfont.Font(file="anpro.ttf", family="Anonymous Pro", size=msize, weight="bold")
 win.resizable(0,0)
 win.title("Volumecontroller")
 
 global allentrys
 allentrys = []
 try:
-    f = open("config.json", "r")
+    f = open("midivolchconfig.json", "r")
     config = json.loads(f.read())
     f.close()
     for entry in config:
@@ -34,7 +35,7 @@ def saveconfig():
     for entry in allentrys:
         config.append({"proc": entry["proc"], "control": entry["control"], "perc": entry["perc"], "init": entry["init"]})
     
-    f = open("config.json", "w")
+    f = open("midivolchconfig.json", "w")
     f.write(json.dumps(config))
     f.close()
 
@@ -215,6 +216,23 @@ def checkmidi():
 
     win.after(20, checkmidi)
 
+def zoomit(event):
+    global win
+    global mainfont
+    global allentrys
+    global msize
+
+    if msize > 8 and event.delta < 0:
+        msize -= 2
+    if msize < 32 and event.delta > 0:
+        msize += 2
+    
+    mainfont = tkfont.Font(family="Anonymous Pro", size=msize, weight="bold")
+
+    for entry in allentrys:
+        entry["label"].config(font = mainfont)
+    
+win.bind("<MouseWheel>", zoomit)
 win.after(100, checkmidi)
 win.after(100, listnewdevs)
 win.mainloop()
