@@ -12,6 +12,7 @@ choco install python -y
 enter this in administrator terminal
 
 or just go to [python.org](https://www.python.org/), then download and install the setup (tick "add python.exe to path")
+
 after setup, my midivolumecontroler needs a few python libraries
 
 ```Shell
