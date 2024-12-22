@@ -15,6 +15,7 @@ import shlex
 
 global win
 win = tk.Tk()
+win.config(bg = "#204050")
 global msize
 msize = 14
 global mainfont
@@ -22,6 +23,18 @@ mainfont = tkfont.Font(file="anpro.ttf", family="Anonymous Pro", size=msize, wei
 win.resizable(0,0)
 win.title("Volumecontroller")
 win.iconbitmap("controler.ico")
+global spkframe
+spkframe = tk.Frame(win)
+spkframe.pack(fill=tk.X, pady=1)
+global micframe
+micframe = tk.Frame(win)
+micframe.pack(fill=tk.X, pady=1)
+global appframe
+appframe = tk.Frame(win)
+appframe.pack(fill=tk.X, pady=1)
+global runframe
+runframe = tk.Frame(win)
+runframe.pack(fill=tk.X, pady=1)
 
 global allentrys
 allentrys = []
@@ -73,6 +86,7 @@ def showapp(in_proc):
     global win
     global mainfont
     global allentrys
+    global runframe
 
     n = 0
     matched = False
@@ -82,11 +96,11 @@ def showapp(in_proc):
             matched = True
 
     end_proc = "> " + in_proc[1:][-90:]
-    color = "#dedede"
+    color = "#cecece"
     if matched:
         entry = allentrys[n]
     else:
-        labello = tk.Label(win, text=end_proc, font=mainfont, bg="#070707", anchor="w")
+        labello = tk.Label(runframe, text=end_proc, font=mainfont, bg="#070707", anchor="w")
         entry = {"proc": in_proc, "txt": end_proc, "label": labello, "control": -1, "note": -1, "perc": 0, "init": True, "standard": False, "smic": False}
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
@@ -97,7 +111,7 @@ def showapp(in_proc):
         entry["label"].config(text = end_proc)
         entry["label"].config(fg = color)
     except:
-        labello = tk.Label(win, text=end_proc, font=mainfont, bg="#070707", fg=color, anchor="w")
+        labello = tk.Label(runframe, text=end_proc, font=mainfont, bg="#070707", fg=color, anchor="w")
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
@@ -108,6 +122,9 @@ def showvolume(in_proc, in_perc):
     global mainfont
     global allentrys
     global tochangeentry
+    global spkframe
+    global micframe
+    global appframe
 
     n = 0
     matched = False
@@ -135,7 +152,12 @@ def showvolume(in_proc, in_perc):
     if matched:
         entry = allentrys[n]
     else:
-        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707", anchor="w")
+        if in_proc.startswith("+"):
+            labello = tk.Label(spkframe, text=txt, font=mainfont, bg="#070707", anchor="w")
+        if in_proc.startswith("-"):
+            labello = tk.Label(micframe, text=txt, font=mainfont, bg="#070707", anchor="w")
+        if in_proc.startswith("#"):
+            labello = tk.Label(appframe, text=txt, font=mainfont, bg="#070707", anchor="w")
         entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "note": -1, "perc": in_perc, "init": True, "standard": False, "smic": False}
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
@@ -151,7 +173,12 @@ def showvolume(in_proc, in_perc):
         entry["label"].config(text = txt)
         entry["label"].config(fg = color)
     except:
-        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
+        if in_proc.startswith("+"):
+            labello = tk.Label(spkframe, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
+        if in_proc.startswith("-"):
+            labello = tk.Label(micframe, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
+        if in_proc.startswith("#"):
+            labello = tk.Label(appframe, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
@@ -186,9 +213,7 @@ def changevol(proc, perc, changeit=True):
         if session.Process and session.Process.name() == proc[1:]:
             if changeit:
                 volume.SetMasterVolume(int(perc / 1.27) / 100, None)
-                showvolume(proc, perc)
-            else:
-                showvolume(proc, 0)
+            showvolume(proc, perc)
 
     showvolume(proc, perc)
 
@@ -204,7 +229,7 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-                        showvolume(proc, perc)
+                    showvolume(proc, perc)
 
     for device in allinpdevices:
         name = "-" + device.FriendlyName
@@ -215,7 +240,7 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-                        showvolume(proc, perc)
+                    showvolume(proc, perc)
 
 
 def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
@@ -287,7 +312,7 @@ for entry in allentrys:
         showapp(entry["proc"])
     else:
         changevol(entry["proc"], entry["perc"], changeit=False)
-mkentry = tk.Entry(win)
+mkentry = tk.Entry(win, font=mainfont, bg="#204050", fg="#cecece")
 mkentry.bind("<Return>", lambda event, e=mkentry : addapp(e))
 mkentry.pack(fill=tk.X)
 
@@ -326,9 +351,11 @@ def checkmidi():
                         tochangeentry = {}
                         entry["note"] = msg.note
                         entry["init"] = False
+                        entry["label"].config(fg = "#cecece")
                         saveconfig()
                     if msg.note == entry["note"]:
                         sp.Popen(shlex.split(entry["proc"][1:]))
+                        entry["label"].config(fg = "#cecece")
                 if entry["proc"].startswith("+"):
                     if tochangeentry == entry:
                         tochangeentry = {}
