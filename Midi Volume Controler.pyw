@@ -1,8 +1,10 @@
 import mido
 import mido.backends.pygame
 import time
+import comtypes
 from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume
+from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume, IMMDeviceEnumerator, EDataFlow, DEVICE_STATE
+from pycaw.constants import CLSID_MMDeviceEnumerator
 import tkinter as tk
 import tkextrafont as tkfont
 import json
@@ -11,11 +13,12 @@ import os
 global win
 win = tk.Tk()
 global msize
-msize = 24
+msize = 14
 global mainfont
 mainfont = tkfont.Font(file="anpro.ttf", family="Anonymous Pro", size=msize, weight="bold")
 win.resizable(0,0)
 win.title("Volumecontroller")
+win.iconbitmap("controler.ico")
 
 global allentrys
 allentrys = []
@@ -74,21 +77,19 @@ def showvolume(in_proc, in_perc):
     if matched == False:
         ctrl = ""
 
+    end_proc = in_proc
+    if end_proc.startswith("+"):
+        end_proc = end_proc[1:]
+
     val = in_perc // 3
     cent = int(float(in_perc) / 1.27)
-    txt = f"{in_proc}"
-    while len(txt) < 24:
-        txt += " "
+    ln = max(1, 50 - len(end_proc))
+    space = " " * ln
     cent = "%3d"%cent
-    txt += f" {cent} ["
+    raut = "#" * val
+    unraut = " " * (42 - val)
+    txt = f"{end_proc} {space} {cent} [{raut}{unraut}]"
     
-    for i in range(42):
-        if i < val:
-            txt += "#"
-        else:
-            txt += "_"
-    txt += "]"
-
     color = "#f1f1f1"
     if matched:
         entry = allentrys[n]
@@ -114,6 +115,18 @@ def showvolume(in_proc, in_perc):
         entry["label"] = labello
     win.title(f"{in_proc} {cent}")
 
+comtypes.CoInitialize()
+global deviceEnumerator
+deviceEnumerator = comtypes.CoCreateInstance(CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER)
+State = DEVICE_STATE.ACTIVE.value
+global collection
+collection = deviceEnumerator.EnumAudioEndpoints(EDataFlow.eAll.value, State)
+global alldevices
+alldevices = []
+for i in range(collection.GetCount()):
+    dev = collection.Item(i)
+    alldevices.append(AudioUtilities.CreateDevice(dev))
+
 def changevol(proc, perc, changeit=True):
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
@@ -127,32 +140,34 @@ def changevol(proc, perc, changeit=True):
 
     showvolume(proc, perc)
 
-def changespkvol(perc, changeit=True):
-    devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    volume = interface.QueryInterface(IAudioEndpointVolume)
-    if changeit:
-        volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-        showvolume("Speakers", perc)
-    else:
-        cent = int(volume.GetMasterVolumeLevelScalar() * 1.27)
-        showvolume("Speakers", cent)
+def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
+    global alldevices
 
-def changemicvol(perc, changeit=True):
-    devices = AudioUtilities.GetMicrophone()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    volume = interface.QueryInterface(IAudioEndpointVolume)
-    if changeit:
-        volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-        showvolume("Microphone", perc)
-    else:
-        cent = int(volume.GetMasterVolumeLevelScalar() * 1.27)
-        showvolume("Microphone", cent)
+    for device in alldevices:
+        name = "+" + device.FriendlyName
+        if proc == name:
+            matched = False
+            for n in range(len(allentrys)):
+                if allentrys[n]["proc"] == name:
+                    volume = device.EndpointVolume
+                    if changeit:
+                        volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
+                        showvolume(proc, perc)
 
-def listnewdevs():
+def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
     global win
     global allentrys
-    
+    global alldevices
+
+    for device in alldevices:
+        name = "+" + device.FriendlyName
+        matched = False
+        for n in range(len(allentrys)):
+            if allentrys[n]["proc"] == name:
+                matched = True
+        if matched == False:
+            showvolume(name, 0)
+
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session._ctl.QueryInterface(ISimpleAudioVolume)
@@ -167,20 +182,12 @@ def listnewdevs():
     win.after(500, listnewdevs)
 
 for entry in allentrys:
-    if entry["proc"] == "Speakers":
-        changespkvol(entry["perc"], changeit=False)
-    elif entry["proc"] == "Microphone":
-        changemicvol(entry["perc"], changeit=False)
-    else:
-        changevol(entry["proc"], entry["perc"], changeit=False)
+    changevol(entry["proc"], entry["perc"], changeit=False)
 
 pygame = mido.Backend('mido.backends.pygame')
 pygame.get_input_names()
 global inport
 inport = pygame.open_input()
-
-changespkvol(0, changeit=False)
-changemicvol(0, changeit=False)
 
 def checkmidi():
     global allentrys
@@ -189,22 +196,14 @@ def checkmidi():
     for msg in inport.iter_pending():
         if msg.is_cc():
             for entry in allentrys:
-                if entry["proc"] == "Speakers":
+                if entry["proc"].startswith("+"):
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["control"] = msg.control
                         entry["init"] = False
                         saveconfig()
                     if msg.control == entry["control"]:
-                        changespkvol(msg.value)
-                elif entry["proc"] == "Microphone":
-                    if tochangeentry == entry:
-                        tochangeentry = {}
-                        entry["control"] = msg.control
-                        entry["init"] = False
-                        saveconfig()
-                    if msg.control == entry["control"]:
-                        changemicvol(msg.value)
+                        changedevvol(entry["proc"], msg.value)
                 else:
                     if tochangeentry == entry:
                         tochangeentry = {}
@@ -224,15 +223,34 @@ def zoomit(event):
 
     if msize > 8 and event.delta < 0:
         msize -= 2
-    if msize < 32 and event.delta > 0:
+    if msize < 18 and event.delta > 0:
         msize += 2
     
     mainfont = tkfont.Font(family="Anonymous Pro", size=msize, weight="bold")
 
     for entry in allentrys:
         entry["label"].config(font = mainfont)
+
+def updatedeviceslist(State = DEVICE_STATE.ACTIVE.value):
+    global collection
+    global alldevices
+    global deviceEnumerator
     
+    for device in alldevices:
+        device._dev.Release()
+    alldevices = []
+
+    collection = deviceEnumerator.EnumAudioEndpoints(EDataFlow.eAll.value, State)
+
+    for i in range(collection.GetCount()):
+        dev = collection.Item(i)
+        if dev is not None:
+            alldevices.append(AudioUtilities.CreateDevice(dev))
+
+    win.after(10000, updatedeviceslist)
+
 win.bind("<MouseWheel>", zoomit)
 win.after(100, checkmidi)
 win.after(100, listnewdevs)
+#win.after(10000, updatedeviceslist)
 win.mainloop()
