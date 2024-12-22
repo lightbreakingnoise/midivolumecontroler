@@ -25,4 +25,4 @@ as soon as it has started, with your default midi controler, you should see Spea
 
 when you give RetroBar a try, you can see last volume change in your taskbar via window title.
 
-![screenshot](/screenshot.png?raw=true&ver=0)
+![screenshot](/screenshot.png?raw=true&ver=0&newver=0)
