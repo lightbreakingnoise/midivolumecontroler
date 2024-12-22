@@ -10,6 +10,8 @@ import tkinter as tk
 import tkextrafont as tkfont
 import json
 import os
+import subprocess as sp
+import shlex
 
 global win
 win = tk.Tk()
@@ -28,8 +30,12 @@ try:
     config = json.loads(f.read())
     f.close()
     for entry in config:
-        if not entry["note"]:
+        if not "note" in entry:
             entry["note"] = -1
+        if not "standard" in entry:
+            entry["standard"] = False
+        if not "smic" in entry:
+            entry["smic"] = False
         allentrys.append(entry)
 except:
     allentrys = []
@@ -40,7 +46,7 @@ def saveconfig():
     config = []
     for entry in allentrys:
         config.append({"proc": entry["proc"], "control": entry["control"], "note": entry["note"], "perc": entry["perc"], "init": entry["init"]})
-    
+
     f = open("midivolchconfig.json", "w")
     f.write(json.dumps(config))
     f.close()
@@ -63,6 +69,40 @@ def removeentry(in_entry):
     except:
         pass
 
+def showapp(in_proc):
+    global win
+    global mainfont
+    global allentrys
+
+    n = 0
+    matched = False
+    for i in range(len(allentrys)):
+        if allentrys[i]["proc"] == in_proc:
+            n = i
+            matched = True
+
+    end_proc = "> " + in_proc[1:][-90:]
+    color = "#dedede"
+    if matched:
+        entry = allentrys[n]
+    else:
+        labello = tk.Label(win, text=end_proc, font=mainfont, bg="#070707", anchor="w")
+        entry = {"proc": in_proc, "txt": end_proc, "label": labello, "control": -1, "note": -1, "perc": 0, "init": True, "standard": False, "smic": False}
+        labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
+        labello.pack(fill=tk.X)
+        allentrys.append(entry)
+
+    try:
+        entry["label"].config(text = end_proc)
+        entry["label"].config(fg = color)
+    except:
+        labello = tk.Label(win, text=end_proc, font=mainfont, bg="#070707", fg=color, anchor="w")
+        labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
+        labello.pack(fill=tk.X)
+        entry["label"] = labello
+
 def showvolume(in_proc, in_perc):
     global win
     global mainfont
@@ -80,9 +120,7 @@ def showvolume(in_proc, in_perc):
     if matched == False:
         ctrl = ""
 
-    end_proc = in_proc
-    if end_proc.startswith("+"):
-        end_proc = end_proc[1:]
+    end_proc = in_proc[1:]
 
     val = in_perc // 3
     cent = int(float(in_perc) / 1.27)
@@ -97,38 +135,46 @@ def showvolume(in_proc, in_perc):
     if matched:
         entry = allentrys[n]
     else:
-        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707")
-        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "note": -1, "perc": in_perc, "init": True}
+        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707", anchor="w")
+        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "note": -1, "perc": in_perc, "init": True, "standard": False, "smic": False}
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
         allentrys.append(entry)
     if entry["init"] == False:
         color = "#10f210"
+        if entry["standard"] or entry["smic"]:
+            color = "#1097f2"
 
     entry["txt"] = txt
     try:
         entry["label"].config(text = txt)
         entry["label"].config(fg = color)
     except:
-        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707", fg=color)
+        labello = tk.Label(win, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
         entry["label"] = labello
-    win.title(f"{in_proc} {cent}")
+    win.title(f"{cent} {end_proc}")
 
 comtypes.CoInitialize()
 global deviceEnumerator
 deviceEnumerator = comtypes.CoCreateInstance(CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER)
 State = DEVICE_STATE.ACTIVE.value
 global collection
-collection = deviceEnumerator.EnumAudioEndpoints(EDataFlow.eAll.value, State)
+inpcollection = deviceEnumerator.EnumAudioEndpoints(EDataFlow.eCapture.value, State)
+outcollection = deviceEnumerator.EnumAudioEndpoints(EDataFlow.eRender.value, State)
+global alloutdevices
+alloutdevices = []
+for i in range(outcollection.GetCount()):
+    dev = outcollection.Item(i)
+    alloutdevices.append(AudioUtilities.CreateDevice(dev))
 global alldevices
-alldevices = []
-for i in range(collection.GetCount()):
-    dev = collection.Item(i)
-    alldevices.append(AudioUtilities.CreateDevice(dev))
+allinpdevices = []
+for i in range(inpcollection.GetCount()):
+    dev = inpcollection.Item(i)
+    allinpdevices.append(AudioUtilities.CreateDevice(dev))
 
 global policy_config
 policy_config = comtypes.CoCreateInstance(pc.CLSID_PolicyConfigClient, pc.IPolicyConfig, comtypes.CLSCTX_ALL)
@@ -137,7 +183,7 @@ def changevol(proc, perc, changeit=True):
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-        if session.Process and session.Process.name() == proc:
+        if session.Process and session.Process.name() == proc[1:]:
             if changeit:
                 volume.SetMasterVolume(int(perc / 1.27) / 100, None)
                 showvolume(proc, perc)
@@ -149,8 +195,19 @@ def changevol(proc, perc, changeit=True):
 def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
     global alldevices
 
-    for device in alldevices:
+    for device in alloutdevices:
         name = "+" + device.FriendlyName
+        if proc == name:
+            matched = False
+            for n in range(len(allentrys)):
+                if allentrys[n]["proc"] == name:
+                    volume = device.EndpointVolume
+                    if changeit:
+                        volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
+                        showvolume(proc, perc)
+
+    for device in allinpdevices:
+        name = "-" + device.FriendlyName
         if proc == name:
             matched = False
             for n in range(len(allentrys)):
@@ -166,8 +223,17 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
     global allentrys
     global alldevices
 
-    for device in alldevices:
+    for device in alloutdevices:
         name = "+" + device.FriendlyName
+        matched = False
+        for n in range(len(allentrys)):
+            if allentrys[n]["proc"] == name:
+                matched = True
+        if matched == False:
+            showvolume(name, 0)
+
+    for device in allinpdevices:
+        name = "-" + device.FriendlyName
         matched = False
         for n in range(len(allentrys)):
             if allentrys[n]["proc"] == name:
@@ -179,12 +245,13 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
     for session in sessions:
         volume = session._ctl.QueryInterface(ISimpleAudioVolume)
         if session.Process:
+            name = "#" + session.Process.name()
             matched = False
             for n in range(len(allentrys)):
-                if allentrys[n]["proc"] == session.Process.name():
+                if allentrys[n]["proc"] == name:
                     matched = True
             if matched == False:
-                showvolume(session.Process.name(), 0)
+                showvolume(name, 0)
     
     win.after(500, listnewdevs)
 
@@ -192,7 +259,7 @@ def changedefault(proc):
     global allentrys
     global alldevices
 
-    for device in alldevices:
+    for device in alloutdevices:
         name = "+" + device.FriendlyName
         if proc == name:
             matched = False
@@ -201,8 +268,28 @@ def changedefault(proc):
                     policy_config.SetDefaultEndpoint(device.id, 0)
                     policy_config.SetDefaultEndpoint(device.id, 2)
 
+    for device in allinpdevices:
+        name = "-" + device.FriendlyName
+        if proc == name:
+            matched = False
+            for n in range(len(allentrys)):
+                if allentrys[n]["proc"] == name:
+                    policy_config.SetDefaultEndpoint(device.id, 0)
+                    policy_config.SetDefaultEndpoint(device.id, 2)
+
+def addapp(ntry):
+    showapp("="+ntry.get())
+    ntry.delete(0, tk.END)
+    ntry.insert(0, "")
+
 for entry in allentrys:
-    changevol(entry["proc"], entry["perc"], changeit=False)
+    if entry["proc"].startswith("="):
+        showapp(entry["proc"])
+    else:
+        changevol(entry["proc"], entry["perc"], changeit=False)
+mkentry = tk.Entry(win)
+mkentry.bind("<Return>", lambda event, e=mkentry : addapp(e))
+mkentry.pack(fill=tk.X)
 
 pygame = mido.Backend('mido.backends.pygame')
 pygame.get_input_names()
@@ -216,7 +303,7 @@ def checkmidi():
     for msg in inport.iter_pending():
         if msg.is_cc():
             for entry in allentrys:
-                if entry["proc"].startswith("+"):
+                if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["control"] = msg.control
@@ -224,7 +311,7 @@ def checkmidi():
                         saveconfig()
                     if msg.control == entry["control"]:
                         changedevvol(entry["proc"], msg.value)
-                else:
+                elif entry["proc"].startswith("#"):
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["control"] = msg.control
@@ -234,6 +321,14 @@ def checkmidi():
                         changevol(entry["proc"], msg.value)
         if msg.type == "note_on":
             for entry in allentrys:
+                if entry["proc"].startswith("="):
+                    if tochangeentry == entry:
+                        tochangeentry = {}
+                        entry["note"] = msg.note
+                        entry["init"] = False
+                        saveconfig()
+                    if msg.note == entry["note"]:
+                        sp.Popen(shlex.split(entry["proc"][1:]))
                 if entry["proc"].startswith("+"):
                     if tochangeentry == entry:
                         tochangeentry = {}
@@ -241,7 +336,35 @@ def checkmidi():
                         saveconfig()
                     if msg.note == entry["note"]:
                         changedefault(entry["proc"])
-                        entry["label"].config(fg = "#10f210")
+                        for ntry in allentrys:
+                            ntry["standard"] = False
+                            if ntry["init"]:
+                                if ntry["smic"]:
+                                    ntry["label"].config(fg = "#1097f2")
+                                else:
+                                    ntry["label"].config(fg = "#f1f1f1")
+                            else:
+                                ntry["label"].config(fg = "#10f210")
+                        entry["standard"] = True
+                        entry["label"].config(fg = "#1097f2")
+                if entry["proc"].startswith("-"):
+                    if tochangeentry == entry:
+                        tochangeentry = {}
+                        entry["note"] = msg.note
+                        saveconfig()
+                    if msg.note == entry["note"]:
+                        changedefault(entry["proc"])
+                        for ntry in allentrys:
+                            ntry["smic"] = False
+                            if ntry["init"]:
+                                if ntry["standard"]:
+                                    ntry["label"].config(fg = "#1097f2")
+                                else:
+                                    ntry["label"].config(fg = "#f1f1f1")
+                            else:
+                                ntry["label"].config(fg = "#10f210")
+                        entry["smic"] = True
+                        entry["label"].config(fg = "#1097f2")
 
     win.after(20, checkmidi)
 
