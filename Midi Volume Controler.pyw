@@ -5,6 +5,7 @@ import comtypes
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume, IMMDeviceEnumerator, EDataFlow, DEVICE_STATE
 from pycaw.constants import CLSID_MMDeviceEnumerator
+import policyconfig as pc
 import tkinter as tk
 import tkextrafont as tkfont
 import json
@@ -27,6 +28,8 @@ try:
     config = json.loads(f.read())
     f.close()
     for entry in config:
+        if not entry["note"]:
+            entry["note"] = -1
         allentrys.append(entry)
 except:
     allentrys = []
@@ -36,7 +39,7 @@ def saveconfig():
 
     config = []
     for entry in allentrys:
-        config.append({"proc": entry["proc"], "control": entry["control"], "perc": entry["perc"], "init": entry["init"]})
+        config.append({"proc": entry["proc"], "control": entry["control"], "note": entry["note"], "perc": entry["perc"], "init": entry["init"]})
     
     f = open("midivolchconfig.json", "w")
     f.write(json.dumps(config))
@@ -95,7 +98,7 @@ def showvolume(in_proc, in_perc):
         entry = allentrys[n]
     else:
         labello = tk.Label(win, text=txt, font=mainfont, bg="#070707")
-        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "perc": in_perc, "init": True}
+        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "note": -1, "perc": in_perc, "init": True}
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
@@ -127,6 +130,9 @@ for i in range(collection.GetCount()):
     dev = collection.Item(i)
     alldevices.append(AudioUtilities.CreateDevice(dev))
 
+global policy_config
+policy_config = comtypes.CoCreateInstance(pc.CLSID_PolicyConfigClient, pc.IPolicyConfig, comtypes.CLSCTX_ALL)
+
 def changevol(proc, perc, changeit=True):
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
@@ -154,6 +160,7 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
                         showvolume(proc, perc)
 
+
 def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
     global win
     global allentrys
@@ -180,6 +187,19 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
                 showvolume(session.Process.name(), 0)
     
     win.after(500, listnewdevs)
+
+def changedefault(proc):
+    global allentrys
+    global alldevices
+
+    for device in alldevices:
+        name = "+" + device.FriendlyName
+        if proc == name:
+            matched = False
+            for n in range(len(allentrys)):
+                if allentrys[n]["proc"] == name:
+                    policy_config.SetDefaultEndpoint(device.id, 0)
+                    policy_config.SetDefaultEndpoint(device.id, 2)
 
 for entry in allentrys:
     changevol(entry["proc"], entry["perc"], changeit=False)
@@ -212,6 +232,16 @@ def checkmidi():
                         saveconfig()
                     if msg.control == entry["control"]:
                         changevol(entry["proc"], msg.value)
+        if msg.type == "note_on":
+            for entry in allentrys:
+                if entry["proc"].startswith("+"):
+                    if tochangeentry == entry:
+                        tochangeentry = {}
+                        entry["note"] = msg.note
+                        saveconfig()
+                    if msg.note == entry["note"]:
+                        changedefault(entry["proc"])
+                        entry["label"].config(fg = "#10f210")
 
     win.after(20, checkmidi)
 
