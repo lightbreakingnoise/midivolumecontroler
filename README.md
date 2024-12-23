@@ -32,7 +32,7 @@ update:
 there is a text entry field where you can enter app to start (with parameters if you want). after adding app you can link this app with a note.
 
 # credits
-[KillerBOSS2019](https://github.com/KillerBOSS2019) and [kdschlosserfor](https://github.com/kdschlosser) for the [policyconfig.py](/policyconfig.py) file.
+[KillerBOSS2019](https://github.com/KillerBOSS2019) and [kdschlosserfor](https://github.com/kdschlosser) for the [policyconfig.py](/app/policyconfig.py) file.
 
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
