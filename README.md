@@ -21,11 +21,11 @@ pip install tk tkextrafont mido pygame comtypes pycaw
 enter this in administrator terminal
 
 # use it
-as soon as it has started, with your default midi controler, you should see Speakers, Microphone and sound producing apps. Just click in one of these lines, it should go red, then turn a knob/fader and it should go green. you can now change it's volume with this knob/fader. just right click in one line to remove a link. now, thanks to KillerBOSS2019 you can tap a note on your midi controler after clicking on a device. this makes the device standard AND standard communication everytime you tap this note. there is a text entry field where you can enter app (with parameters if you want) to start. after adding app you can link this app with a note. with mousewheel you can change font size and that changes window size.
+as soon as it has started, with your default midi controler, you should see output/input devices and sound producing apps. Just click in one of these lines, it should go red, then turn a knob/fader and it should go green. you can now change it's volume with this knob/fader. just right click in one line to remove a link. now, thanks to KillerBOSS2019 you can tap a note on your midi controler after clicking on a device. this makes the device standard AND standard communication everytime you tap this note. there is a text entry field where you can enter app (with parameters if you want) to start. after adding app you can link this app with a note. with mousewheel you can change font size and that changes window size.
 
 # credits
 [KillerBOSS2019](https://github.com/KillerBOSS2019) and [kdschlosserfor](https://github.com/kdschlosser) for the [policyconfig.py](/policyconfig.py) file.
 
-when you give RetroBar a try, you can see last volume change in your taskbar via window title.
+when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
 ![screenshot](/screenshot_003.png?raw=true)
