@@ -7,7 +7,8 @@ from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioEndpointVolume
 from pycaw.constants import CLSID_MMDeviceEnumerator
 import policyconfig as pc
 import tkinter as tk
-import tkextrafont as tkfont
+import tkinter.font as tkfont
+#import tkextrafont as tkfont
 import json
 import os
 import subprocess as sp
@@ -19,9 +20,9 @@ win.config(bg = "#204050")
 global msize
 msize = 14
 global mainfont
-mainfont = tkfont.Font(file="anpro.ttf", family="Anonymous Pro", size=msize, weight="bold")
+mainfont = tkfont.Font(family="Terminal", size=msize, weight="bold")
 win.resizable(0,0)
-win.title("Volumecontroller")
+win.title("Midi Volume Controller")
 win.iconbitmap("controler.ico")
 global spkframe
 spkframe = tk.Frame(win)
@@ -165,8 +166,8 @@ def showvolume(in_proc, in_perc):
         allentrys.append(entry)
     if entry["init"] == False:
         color = "#10f210"
-        if entry["standard"] or entry["smic"]:
-            color = "#1097f2"
+    if entry["standard"] or entry["smic"]:
+        color = "#1097f2"
 
     entry["txt"] = txt
     try:
@@ -183,7 +184,7 @@ def showvolume(in_proc, in_perc):
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
         entry["label"] = labello
-    win.title(f"{cent} {end_proc}")
+    #win.title(f"{cent} {end_proc}")
 
 comtypes.CoInitialize()
 global deviceEnumerator
@@ -207,18 +208,24 @@ global policy_config
 policy_config = comtypes.CoCreateInstance(pc.CLSID_PolicyConfigClient, pc.IPolicyConfig, comtypes.CLSCTX_ALL)
 
 def changevol(proc, perc, changeit=True):
+    outperc = perc
+    
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = session._ctl.QueryInterface(ISimpleAudioVolume)
         if session.Process and session.Process.name() == proc[1:]:
             if changeit:
                 volume.SetMasterVolume(int(perc / 1.27) / 100, None)
+            else:
+                outperc = int(volume.GetMasterVolume() * 127.0)
 
-    showvolume(proc, perc)
+    showvolume(proc, outperc)
 
 def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
-    global alldevices
+    global alloutdevices
+    global allinpdevices
 
+    outperc = perc
     for device in alloutdevices:
         name = "+" + device.FriendlyName
         if proc == name:
@@ -228,6 +235,8 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
+                    else:
+                        outperc = int(volume.GetMasterVolumeLevelScalar() * 127.0) + 1
 
     for device in allinpdevices:
         name = "-" + device.FriendlyName
@@ -238,8 +247,10 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
+                    else:
+                        outperc = int(volume.GetMasterVolumeLevelScalar() * 127.0) + 1
 
-    showvolume(proc, perc)
+    showvolume(proc, outperc)
 
 
 def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
@@ -253,8 +264,7 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
         for n in range(len(allentrys)):
             if allentrys[n]["proc"] == name:
                 matched = True
-        if matched == False:
-            showvolume(name, 0)
+        changedevvol(name, 0, changeit=False)
 
     for device in allinpdevices:
         name = "-" + device.FriendlyName
@@ -262,8 +272,7 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
         for n in range(len(allentrys)):
             if allentrys[n]["proc"] == name:
                 matched = True
-        if matched == False:
-            showvolume(name, 0)
+        changedevvol(name, 0, changeit=False)
 
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
@@ -274,8 +283,7 @@ def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
             for n in range(len(allentrys)):
                 if allentrys[n]["proc"] == name:
                     matched = True
-            if matched == False:
-                showvolume(name, 0)
+            changevol(name, 0, changeit=False)
     
     win.after(500, listnewdevs)
 
@@ -310,9 +318,9 @@ for entry in allentrys:
     if entry["proc"].startswith("="):
         showapp(entry["proc"])
     if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
-        changedevvol(entry["proc"], entry["perc"])
+        changedevvol(entry["proc"], entry["perc"], changeit=False)
     if entry["proc"].startswith("#"):
-        changevol(entry["proc"], entry["perc"])
+        changevol(entry["proc"], entry["perc"], changeit=False)
 
 mkentry = tk.Entry(win, font=mainfont, bg="#204050", fg="#cecece")
 mkentry.bind("<Return>", lambda event, e=mkentry : addapp(e))
@@ -323,14 +331,33 @@ pygame.get_input_names()
 global inport
 inport = pygame.open_input()
 
+global rstcount
+rstcount = 0
+
+def resettitle():
+    global win
+    global rstcount
+
+    if rstcount <= 0:
+        rstcount = 50
+        win.title("Midi Volume Controller")
+    else:
+        rstcount -= 1
+
+    win.after(100, resettitle)
+
 def checkmidi():
     global allentrys
     global tochangeentry
+    global win
+    global rstcount
     
     for msg in inport.iter_pending():
         if msg.is_cc():
+            wperc = int(msg.value / 1.27)
             for entry in allentrys:
                 if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
+                    proc = entry["proc"][1:]
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["control"] = msg.control
@@ -339,8 +366,11 @@ def checkmidi():
                     if msg.control == entry["control"]:
                         changedevvol(entry["proc"], msg.value)
                         entry["perc"] = msg.value
+                        win.title(f"{wperc} {proc}")
+                        rstcount = 50
                         saveconfig()
                 elif entry["proc"].startswith("#"):
+                    proc = entry["proc"][1:]
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["control"] = msg.control
@@ -349,10 +379,13 @@ def checkmidi():
                     if msg.control == entry["control"]:
                         changevol(entry["proc"], msg.value)
                         entry["perc"] = msg.value
+                        win.title(f"{wperc} {proc}")
+                        rstcount = 50
                         saveconfig()
         if msg.type == "note_on":
             for entry in allentrys:
                 if entry["proc"].startswith("="):
+                    proc = entry["proc"][1:]
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["note"] = msg.note
@@ -362,7 +395,10 @@ def checkmidi():
                     if msg.note == entry["note"]:
                         sp.Popen(shlex.split(entry["proc"][1:]))
                         entry["label"].config(fg = "#cecece")
+                        win.title(f"run {proc}")
+                        rstcount = 50
                 if entry["proc"].startswith("+"):
+                    proc = entry["proc"][1:]
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["note"] = msg.note
@@ -380,8 +416,11 @@ def checkmidi():
                                 ntry["label"].config(fg = "#10f210")
                         entry["standard"] = True
                         entry["label"].config(fg = "#1097f2")
+                        win.title(f"set std spk {proc}")
+                        rstcount = 50
                         saveconfig()
                 if entry["proc"].startswith("-"):
+                    proc = entry["proc"][1:]
                     if tochangeentry == entry:
                         tochangeentry = {}
                         entry["note"] = msg.note
@@ -399,6 +438,8 @@ def checkmidi():
                                 ntry["label"].config(fg = "#10f210")
                         entry["smic"] = True
                         entry["label"].config(fg = "#1097f2")
+                        win.title(f"set std mic {proc}")
+                        rstcount = 50
                         saveconfig()
 
     win.after(20, checkmidi)
@@ -414,7 +455,7 @@ def zoomit(event):
     if msize < 18 and event.delta > 0:
         msize += 2
     
-    mainfont = tkfont.Font(family="Anonymous Pro", size=msize, weight="bold")
+    mainfont = tkfont.Font(family="Terminal", size=msize, weight="bold")
 
     for entry in allentrys:
         entry["label"].config(font = mainfont)
@@ -440,5 +481,6 @@ def updatedeviceslist(State = DEVICE_STATE.ACTIVE.value):
 win.bind("<MouseWheel>", zoomit)
 win.after(100, checkmidi)
 win.after(100, listnewdevs)
+win.after(100, resettitle)
 #win.after(10000, updatedeviceslist)
 win.mainloop()
