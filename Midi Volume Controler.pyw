@@ -213,7 +213,6 @@ def changevol(proc, perc, changeit=True):
         if session.Process and session.Process.name() == proc[1:]:
             if changeit:
                 volume.SetMasterVolume(int(perc / 1.27) / 100, None)
-            showvolume(proc, perc)
 
     showvolume(proc, perc)
 
@@ -229,7 +228,6 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-                    showvolume(proc, perc)
 
     for device in allinpdevices:
         name = "-" + device.FriendlyName
@@ -240,7 +238,8 @@ def changedevvol(proc, perc, changeit=True, State = DEVICE_STATE.ACTIVE.value):
                     volume = device.EndpointVolume
                     if changeit:
                         volume.SetMasterVolumeLevelScalar(int(perc / 1.27) / 100, None)
-                    showvolume(proc, perc)
+
+    showvolume(proc, perc)
 
 
 def listnewdevs(State = DEVICE_STATE.ACTIVE.value):
@@ -310,8 +309,11 @@ def addapp(ntry):
 for entry in allentrys:
     if entry["proc"].startswith("="):
         showapp(entry["proc"])
-    else:
-        changevol(entry["proc"], entry["perc"], changeit=False)
+    if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
+        changedevvol(entry["proc"], entry["perc"])
+    if entry["proc"].startswith("#"):
+        changevol(entry["proc"], entry["perc"])
+
 mkentry = tk.Entry(win, font=mainfont, bg="#204050", fg="#cecece")
 mkentry.bind("<Return>", lambda event, e=mkentry : addapp(e))
 mkentry.pack(fill=tk.X)
@@ -336,6 +338,8 @@ def checkmidi():
                         saveconfig()
                     if msg.control == entry["control"]:
                         changedevvol(entry["proc"], msg.value)
+                        entry["perc"] = msg.value
+                        saveconfig()
                 elif entry["proc"].startswith("#"):
                     if tochangeentry == entry:
                         tochangeentry = {}
@@ -344,6 +348,8 @@ def checkmidi():
                         saveconfig()
                     if msg.control == entry["control"]:
                         changevol(entry["proc"], msg.value)
+                        entry["perc"] = msg.value
+                        saveconfig()
         if msg.type == "note_on":
             for entry in allentrys:
                 if entry["proc"].startswith("="):
@@ -374,6 +380,7 @@ def checkmidi():
                                 ntry["label"].config(fg = "#10f210")
                         entry["standard"] = True
                         entry["label"].config(fg = "#1097f2")
+                        saveconfig()
                 if entry["proc"].startswith("-"):
                     if tochangeentry == entry:
                         tochangeentry = {}
@@ -392,6 +399,7 @@ def checkmidi():
                                 ntry["label"].config(fg = "#10f210")
                         entry["smic"] = True
                         entry["label"].config(fg = "#1097f2")
+                        saveconfig()
 
     win.after(20, checkmidi)
 
