@@ -4,7 +4,7 @@ change volume levels of apps, speaker and microphone with your midi controler
 actually it only works on windows
 
 it needs python!
-you can install it with
+you can install it with [chocolatey](https://chocolatey.org/install)
 
 ```Shell
 choco install python -y
@@ -28,4 +28,5 @@ as soon as it has started, with your default midi controler, you should see outp
 
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
+# screenshot
 ![screenshot](/screenshot_003.png?raw=true)
