@@ -50,6 +50,8 @@ try:
             entry["standard"] = False
         if not "smic" in entry:
             entry["smic"] = False
+        if not "ctrl2" in entry:
+            entry["ctrl2"] = -1
         allentrys.append(entry)
 except:
     allentrys = []
@@ -59,7 +61,7 @@ def saveconfig():
 
     config = []
     for entry in allentrys:
-        config.append({"proc": entry["proc"], "control": entry["control"], "note": entry["note"], "perc": entry["perc"], "init": entry["init"]})
+        config.append({"proc": entry["proc"], "control": entry["control"], "ctrl2": entry["ctrl2"], "note": entry["note"], "perc": entry["perc"], "init": entry["init"]})
 
     f = open("midivolchconfig.json", "w")
     f.write(json.dumps(config))
@@ -68,10 +70,27 @@ def saveconfig():
 global tochangeentry
 tochangeentry = {}
 
-def startconfigure(in_entry):
+def pre_startconfigure(in_entry):
+    global win
+    global mainfont
+    
+    subwin = tk.Toplevel(win)
+    subwin.resizable(0,0)
+    subwin.attributes("-topmost", 1)
+    btn1 = tk.Button(subwin, text="make standard", font=mainfont, command=lambda : startconfigure(in_entry, in_mode=2, rm_win=subwin))
+    btn1.grid(column=0, row=0)
+    btn2 = tk.Button(subwin, text="change volume", font=mainfont, command=lambda : startconfigure(in_entry, in_mode=1, rm_win=subwin))
+    btn2.grid(column=1, row=0)
+
+def startconfigure(in_entry, in_mode=1, rm_win=None):
     global tochangeentry
     tochangeentry = in_entry
     in_entry["label"].config(fg = "#ed7712")
+    in_entry["mode"] = in_mode
+
+    if rm_win is not None:
+        rm_win.destroy()
+        rm_win.update()
 
 def removeentry(in_entry):
     global allentrys
@@ -102,7 +121,7 @@ def showapp(in_proc):
         entry = allentrys[n]
     else:
         labello = tk.Label(runframe, text=end_proc, font=mainfont, bg="#070707", anchor="w")
-        entry = {"proc": in_proc, "txt": end_proc, "label": labello, "control": -1, "note": -1, "perc": 0, "init": True, "standard": False, "smic": False}
+        entry = {"proc": in_proc, "txt": end_proc, "label": labello, "control": -1, "ctrl2": -1, "note": -1, "perc": 0, "init": True, "standard": False, "smic": False, "mode": 0}
         labello.bind("<Button-1>", lambda x: startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
@@ -138,7 +157,7 @@ def showvolume(in_proc, in_perc):
     if matched == False:
         ctrl = ""
 
-    end_proc = in_proc[1:]
+    end_proc = in_proc[1:48]
 
     val = in_perc // 3
     cent = int(float(in_perc) / 1.27)
@@ -159,8 +178,11 @@ def showvolume(in_proc, in_perc):
             labello = tk.Label(micframe, text=txt, font=mainfont, bg="#070707", anchor="w")
         if in_proc.startswith("#"):
             labello = tk.Label(appframe, text=txt, font=mainfont, bg="#070707", anchor="w")
-        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "note": -1, "perc": in_perc, "init": True, "standard": False, "smic": False}
-        labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        entry = {"proc": in_proc, "txt": txt, "label": labello, "control": -1, "ctrl2": -1, "note": -1, "perc": in_perc, "init": True, "standard": False, "smic": False, "mode": 0}
+        if in_proc.startswith("#"):
+            labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        else:
+            labello.bind("<Button-1>", lambda x: pre_startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
         allentrys.append(entry)
@@ -180,7 +202,10 @@ def showvolume(in_proc, in_perc):
             labello = tk.Label(micframe, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
         if in_proc.startswith("#"):
             labello = tk.Label(appframe, text=txt, font=mainfont, bg="#070707", fg=color, anchor="w")
-        labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        if in_proc.startswith("#"):
+            labello.bind("<Button-1>", lambda x: startconfigure(entry))
+        else:
+            labello.bind("<Button-1>", lambda x: pre_startconfigure(entry))
         labello.bind("<ButtonRelease-3>", lambda x: removeentry(entry))
         labello.pack(fill=tk.X)
         entry["label"] = labello
@@ -356,32 +381,91 @@ def checkmidi():
         if msg.is_cc():
             wperc = int(msg.value / 1.27)
             for entry in allentrys:
-                if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
-                    proc = entry["proc"][1:]
-                    if tochangeentry == entry:
-                        tochangeentry = {}
-                        entry["control"] = msg.control
-                        entry["init"] = False
-                        saveconfig()
-                    if msg.control == entry["control"]:
-                        changedevvol(entry["proc"], msg.value)
-                        entry["perc"] = msg.value
-                        win.title(f"{wperc} {proc}")
-                        rstcount = 50
-                        saveconfig()
-                elif entry["proc"].startswith("#"):
-                    proc = entry["proc"][1:]
-                    if tochangeentry == entry:
-                        tochangeentry = {}
-                        entry["control"] = msg.control
-                        entry["init"] = False
-                        saveconfig()
-                    if msg.control == entry["control"]:
-                        changevol(entry["proc"], msg.value)
-                        entry["perc"] = msg.value
-                        win.title(f"{wperc} {proc}")
-                        rstcount = 50
-                        saveconfig()
+                    if entry["proc"].startswith("+") or entry["proc"].startswith("-"):
+                        proc = entry["proc"][1:]
+                        if tochangeentry == entry and entry["mode"] == 1:
+                            tochangeentry = {}
+                            entry["control"] = msg.control
+                            entry["init"] = False
+                            saveconfig()
+                        if msg.control == entry["control"]:
+                            changedevvol(entry["proc"], msg.value)
+                            entry["perc"] = msg.value
+                            win.title(f"{wperc} {proc}")
+                            rstcount = 50
+                            saveconfig()
+                    elif entry["proc"].startswith("#"):
+                        proc = entry["proc"][1:]
+                        if tochangeentry == entry:
+                            tochangeentry = {}
+                            entry["control"] = msg.control
+                            entry["init"] = False
+                            saveconfig()
+                        if msg.control == entry["control"]:
+                            changevol(entry["proc"], msg.value)
+                            entry["perc"] = msg.value
+                            win.title(f"{wperc} {proc}")
+                            rstcount = 50
+                            saveconfig()
+                    if entry["proc"].startswith("+"):
+                        proc = entry["proc"][1:]
+                        if tochangeentry == entry and entry["mode"] == 2:
+                            tochangeentry = {}
+                            entry["ctrl2"] = msg.control
+                            entry["init"] = False
+                            saveconfig()
+                        if msg.control == entry["ctrl2"]:
+                            changedefault(entry["proc"])
+                            for ntry in allentrys:
+                                ntry["standard"] = False
+                                if ntry["init"]:
+                                    if ntry["smic"]:
+                                        ntry["label"].config(fg = "#1097f2")
+                                    else:
+                                        ntry["label"].config(fg = "#f1f1f1")
+                                else:
+                                    ntry["label"].config(fg = "#10f210")
+                            entry["standard"] = True
+                            entry["label"].config(fg = "#1097f2")
+                            win.title(f"set std spk {proc}")
+                            rstcount = 50
+                            saveconfig()
+                    if entry["proc"].startswith("-"):
+                        proc = entry["proc"][1:]
+                        if tochangeentry == entry and entry["mode"] == 2:
+                            tochangeentry = {}
+                            entry["ctrl2"] = msg.control
+                            entry["init"] = False
+                            saveconfig()
+                        if msg.control == entry["ctrl2"]:
+                            changedefault(entry["proc"])
+                            for ntry in allentrys:
+                                ntry["smic"] = False
+                                if ntry["init"]:
+                                    if ntry["standard"]:
+                                        ntry["label"].config(fg = "#1097f2")
+                                    else:
+                                        ntry["label"].config(fg = "#f1f1f1")
+                                else:
+                                    ntry["label"].config(fg = "#10f210")
+                            entry["smic"] = True
+                            entry["label"].config(fg = "#1097f2")
+                            win.title(f"set std mic {proc}")
+                            rstcount = 50
+                            saveconfig()
+                    if entry["proc"].startswith("=") and msg.value > 63:
+                        proc = entry["proc"][1:]
+                        if tochangeentry == entry:
+                            tochangeentry = {}
+                            entry["control"] = msg.control
+                            entry["init"] = False
+                            entry["label"].config(fg = "#cecece")
+                            saveconfig()
+                        if msg.control == entry["control"] and msg.value > 63:
+                            sp.Popen(shlex.split(proc))
+                            entry["label"].config(fg = "#cecece")
+                            win.title(f"run {proc}")
+                            rstcount = 50
         if msg.type == "note_on":
             for entry in allentrys:
                 if entry["proc"].startswith("="):
