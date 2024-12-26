@@ -132,6 +132,7 @@ class Controller:
             gui.rstcount = 50
         if typ == "script" and val > 63:
             sp.Popen(shlex.split(con))
+            gui.updateentry(ntry)
             gui.win.title(f"running {con}")
             gui.rstcount = 50
 
@@ -143,30 +144,46 @@ class WinSound:
         self.devEnum = comtypes.CoCreateInstance(cawstants.CLSID_MMDeviceEnumerator,
             caw.IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER)
 
+        self.micdevs = []
+        self.spkdevs = []
+        self.enumdevices()
+        
+        # the policy config needed for changing standard devices
+        self.policy_config = comtypes.CoCreateInstance(pc.CLSID_PolicyConfigClient,
+            pc.IPolicyConfig, comtypes.CLSCTX_ALL)
+
+    def enumdevices(self, gui=None):
         # important values
         micval = caw.EDataFlow.eCapture.value
         spkval = caw.EDataFlow.eRender.value
         state = caw.DEVICE_STATE.ACTIVE.value
 
         # collections of devices
-        self.micdevs = []
         micdevs = self.devEnum.EnumAudioEndpoints(micval, state)
-        self.spkdevs = []
         spkdevs = self.devEnum.EnumAudioEndpoints(spkval, state)
         
         # copy collections to lists
         self.copydevs(micdevs, self.micdevs)
         self.copydevs(spkdevs, self.spkdevs)
 
-        # the policy config needed for changing standard devices
-        self.policy_config = comtypes.CoCreateInstance(pc.CLSID_PolicyConfigClient,
-            pc.IPolicyConfig, comtypes.CLSCTX_ALL)
+        if gui is not None:
+            gui.win.after(1000, lambda : self.enumdevices(gui))
 
     # copy a device collection to destination list
     def copydevs(self, srcdevs, dstdevs):
+        checklist = []
         for i in range(srcdevs.GetCount()):
             dev = srcdevs.Item(i)
-            dstdevs.append(caw.AudioUtilities.CreateDevice(dev))
+            ndev = caw.AudioUtilities.CreateDevice(dev)
+            checklist.append(ndev)
+            if not ndev.FriendlyName in [x.FriendlyName for x in dstdevs]:
+                dstdevs.append(ndev)
+        todels = []
+        for dev in dstdevs:
+            if not dev.FriendlyName in [x.FriendlyName for x in checklist]:
+                todels.append(dev)
+        for todel in todels:
+            dstdevs.remove(todel)
 
     # call this to change volume of an app
     def change_app_vol(self, appname, value, changeit=True):
@@ -226,7 +243,14 @@ class WinSound:
                 d = {"type": dsttype, "content": devname,
                      "trigger": "", "value": value, "std": False, "init": False}
                 gui.addentry(d)
-    
+
+        todels = []
+        for e in gui.entrys:
+            if e["type"] == dsttype and e["content"] not in [x.FriendlyName for x in devlist]:
+                todels.append(e)
+        for todel in todels:
+            gui.removeentry(todel)
+
     def listdevices(self, gui):
         self.list_devs(gui, self.micdevs, "microphone")
         self.list_devs(gui, self.spkdevs, "speaker")
@@ -423,9 +447,8 @@ class GUI:
              "trigger": "", "value": 0, "std": False, "init": False}
         self.addentry(d)
         self.mkscript.delete(0, tk.END)
-        # do i really need to insert nothing?
-        self.mkscript.insert(0, "")
-        
+        self.save()
+
     def load(self):
         try:
             f = open("mivoco.json", "r")
@@ -467,10 +490,13 @@ def main():
         ctrl.select_midi(val)
         gui.selector.destroy()
         gui.win.attributes("-disabled", False)
+        gui.win.attributes("-topmost", 1)
+        gui.win.attributes("-topmost", 0)
         gui.win.after(50, lambda : ctrl.checkmidi(gui, sound))
         gui.win.after(100, lambda : sound.listdevices(gui))
         gui.win.after(500, lambda : sound.listapps(gui))
         gui.win.after(700, gui.resetonzero)
+        gui.win.after(2000, lambda : sound.enumdevices(gui))
 
     def disable_event():
         pass
