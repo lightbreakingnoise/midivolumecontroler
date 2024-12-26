@@ -96,12 +96,17 @@ class Controller:
         typ = ntry["type"]
         con = ntry["content"]
         val = ntry["value"]
+        ival = int(val / 1.27)
         if typ == "microphone" and mod == "vol":
             snd.change_mic_vol(con, val)
             gui.updateentry(ntry)
+            gui.win.title(f"{ival} {con}")
+            gui.rstcount = 50
         if typ == "speaker" and mod == "vol":
             snd.change_spk_vol(con, val)
             gui.updateentry(ntry)
+            gui.win.title(f"{ival} {con}")
+            gui.rstcount = 50
         if typ == "microphone" and mod == "std":
             snd.change_default_mic(con)
             for e in gui.entrys:
@@ -109,6 +114,8 @@ class Controller:
                 gui.updateentry(e)
             ntry["std"] = True
             gui.updateentry(ntry)
+            gui.win.title(f"standard now: {con}")
+            gui.rstcount = 50
         if typ == "speaker" and mod == "std":
             snd.change_default_spk(con)
             for e in gui.entrys:
@@ -116,11 +123,17 @@ class Controller:
                 gui.updateentry(e)
             ntry["std"] = True
             gui.updateentry(ntry)
+            gui.win.title(f"standard now: {con}")
+            gui.rstcount = 50
         if typ == "app":
             snd.change_app_vol(con, val)
             gui.updateentry(ntry)
+            gui.win.title(f"{ival} {con}")
+            gui.rstcount = 50
         if typ == "script":
             sp.Popen(shlex.split(con))
+            gui.win.title(f"running {con}")
+            gui.rstcount = 50
 
 class WinSound:
     def __init__(self):
@@ -251,6 +264,7 @@ class GUI:
             size=24, weight="bold")
         self.win.resizable(0,0)
         self.win.title("Midi Volume Controller")
+        self.rstcount = 50
         self.win.iconbitmap("controller.ico")
         self.win.attributes("-disabled", True)
 
@@ -289,6 +303,13 @@ class GUI:
         self.entrys = []
         self.chentry = None
         self.load()
+
+    def resetonzero(self):
+        self.rstcount -= 1
+        if self.rstcount <= 0:
+            self.rstcount = 50
+            self.win.title("Midi Volume Controller")
+        self.win.after(100, self.resetonzero)
 
     def setstdmode(self):
         self.chmode = "std"
@@ -445,6 +466,7 @@ def main():
         gui.win.after(50, lambda : ctrl.checkmidi(gui, sound))
         gui.win.after(100, lambda : sound.listdevices(gui))
         gui.win.after(500, lambda : sound.listapps(gui))
+        gui.win.after(700, gui.resetonzero)
 
     def disable_event():
         pass
