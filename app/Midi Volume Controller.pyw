@@ -130,7 +130,7 @@ class Controller:
             gui.updateentry(ntry)
             gui.win.title(f"{ival} {con}")
             gui.rstcount = 50
-        if typ == "script":
+        if typ == "script" and val > 63:
             sp.Popen(shlex.split(con))
             gui.win.title(f"running {con}")
             gui.rstcount = 50
@@ -288,9 +288,10 @@ class GUI:
         self.apps.pack(fill=tk.X, pady=1)
         self.scripts = tk.Frame(self.win)
         self.scripts.pack(fill=tk.X, pady=6)
+        self.scripts.bind("<Expose>", self.onexpose)
         self.mkscript = tk.Entry(self.win, font=self.mainfont,
             bg=gc.fieldback, fg=gc.scripts)
-        self.mkscript.bind("<Return>", self.addscript)
+        self.mkscript.bind("<Return>", lambda event : self.addscript())
         self.mkscript.pack(fill=tk.X, pady=1)
 
         # type = speaker, microphone, app, script
@@ -303,6 +304,11 @@ class GUI:
         self.entrys = []
         self.chentry = None
         self.load()
+
+    def onexpose(self, e):
+        w = e.widget
+        if not w.children:
+            w.configure(height=1)
 
     def resetonzero(self):
         self.rstcount -= 1
@@ -356,7 +362,7 @@ class GUI:
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
             txt = "> " + ncont
-            dstframe = self.apps
+            dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
         if ntype == "speaker":
@@ -377,6 +383,8 @@ class GUI:
         color = gc.noassi
         if ntry["init"]:
             color = gc.isassi
+            if ntype == "script":
+                color = gc.isscriptassi
         if ntry["std"]:
             color = gc.isstd
         if ntry["label"]["fg"] != gc.mkassi:
@@ -394,7 +402,7 @@ class GUI:
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
             txt = "> " + ncont
-            dstframe = self.apps
+            dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
         if ntype == "speaker":
@@ -409,18 +417,14 @@ class GUI:
         ntry["label"].bind("<Button-3>", lambda event, lntry=ntry : self.removeentry(lntry))
         ntry["label"].pack(fill=tk.X)
         
-    def addscript(self, event):
+    def addscript(self):
         entry = self.mkscript.get()
         d = {"type": "script", "content": entry,
-             "trigger": "", "value": -1, "std": False, "init": False}
-        self.entrys.append(d)
+             "trigger": "", "value": 0, "std": False, "init": False}
+        self.addentry(d)
         self.mkscript.delete(0, tk.END)
         # do i really need to insert nothing?
         self.mkscript.insert(0, "")
-        d["label"] = tk.Label(self.scripts, text="> " + entry[:80],
-            font=self.mainfont, bg=gc.fieldback, fg=gc.scripts)
-        d["label"].bind("<Button-1>", lambda event, ntry=d : self.startconfigure(ntry))
-        d["label"].bind("<Button-3>", lambda event, ntry=d : self.removeentry(ntry))
         
     def load(self):
         try:
