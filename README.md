@@ -26,7 +26,7 @@ as soon as it has started, with your default midi controler, you should see outp
 with mousewheel you can change font size and that changes window size.
 
 update:
-now, thanks to KillerBOSS2019 you can tap a note on your midi controler after clicking on a device. this makes the device standard AND standard communication everytime you tap this note.
+now, thanks to KillerBOSS2019 you can assign a note or control on your midi controler after clicking on a device when "make standard" is selected. this makes the device standard AND standard communication everytime you tap this note/control.
 
 update:
 there is a text entry field where you can enter app to start (with parameters if you want). after adding app you can link this app with a note.
@@ -37,4 +37,4 @@ there is a text entry field where you can enter app to start (with parameters if
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
 # screenshot
-![screenshot](/screenshot_003.png?raw=true)
+![screenshot](/screenshot_004.png?raw=true)
