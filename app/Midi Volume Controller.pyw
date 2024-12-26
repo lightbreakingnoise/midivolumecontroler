@@ -314,7 +314,7 @@ class GUI:
         self.scripts.pack(fill=tk.X, pady=6)
         self.scripts.bind("<Expose>", self.onexpose)
         self.mkscript = tk.Entry(self.win, font=self.mainfont,
-            bg=gc.fieldback, fg=gc.scripts)
+            bg=gc.scripts, fg=gc.fieldback, border=8, relief=tk.FLAT)
         self.mkscript.bind("<Return>", lambda event : self.addscript())
         self.mkscript.pack(fill=tk.X, pady=1)
 
@@ -385,7 +385,7 @@ class GUI:
         empty = ""
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
-            txt = "> " + ncont
+            txt = "> " + ntry["content"][:80]
             dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
@@ -425,7 +425,7 @@ class GUI:
         empty = ""
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
-            txt = "> " + ncont
+            txt = "> " + ntry["content"][:80]
             dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
