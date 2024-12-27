@@ -1,21 +1,22 @@
 # midivolumecontroler
 ### change volume levels of apps, speaker and microphone with your midi controler
 
-> [!NOTE]
+> [!WARNING]
 > actually it **only** works on windows
 
-**it needs python!**
+> [!NOTE]
+> **it needs python!**
 
-> you can install it with [chocolatey](https://chocolatey.org/install)<br>
+you can install it with [chocolatey](https://chocolatey.org/install)<br>
 > ```Shell
 > choco install python -y
 > ```
 > enter this in administrator terminal
 
-**or just go to [python.org](https://www.python.org/),<br>
-then download and install the setup (tick _"add python.exe to path"_)**
+> **or just go to [python.org](https://www.python.org/),<br>
+> then download and install the setup (tick _"add python.exe to path"_)**
 
-> after setup, my midivolumecontroler needs a few python libraries<br>
+after setup, my midivolumecontroler needs a few python libraries<br>
 > ```Shell
 > pip install tk tkextrafont mido pygame comtypes pycaw
 > ```
