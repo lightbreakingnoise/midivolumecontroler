@@ -13,8 +13,9 @@ you can install it with [chocolatey](https://chocolatey.org/install)<br>
 > ```
 > enter this in administrator terminal
 
-> **or just go to [python.org](https://www.python.org/),<br>
-> then download and install the setup (tick _"add python.exe to path"_)**
+or you can install it regular
+> just go to [python.org](https://www.python.org/),<br>
+> then download and install the setup (tick _"add python.exe to path"_)
 
 after setup, my midivolumecontroler needs a few python libraries<br>
 > ```Shell
