@@ -4,6 +4,8 @@
 > [!WARNING]
 > actually it **only** works on windows
 
+
+
 > [!NOTE]
 > **it needs python!**
 
@@ -17,11 +19,15 @@ or you can install it regular
 > just go to [python.org](https://www.python.org/),<br>
 > then download and install the setup (tick _"add python.exe to path"_)
 
+
+
 after python is installed correctly, my midivolumecontroller needs a few python libraries<br>
 > ```Shell
 > pip install tk tkextrafont mido pygame comtypes pycaw
 > ```
 > enter this in administrator terminal
+
+
 
 ## use it
 > as soon as it has started, choose your midi controler, then you should see output/input devices and sound producing apps.<br>
@@ -36,11 +42,14 @@ after python is installed correctly, my midivolumecontroller needs a few python 
 > there is a text entry field where you can enter app/command to start (with parameters if you want).<br>
 > after adding app/command you can assign this with a note/button.
 
+
+
 ## credits
 > [KillerBOSS2019](https://github.com/KillerBOSS2019) and<br>
 > [kdschlosserfor](https://github.com/kdschlosser)<br>
 > for the [policyconfig.py](/app/policyconfig.py) file.<br>
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
+
 
 ## screenshot
 ![screenshot](/screenshot_005.png?raw=true)
