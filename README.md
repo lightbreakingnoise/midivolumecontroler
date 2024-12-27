@@ -1,5 +1,6 @@
 # midivolumecontroller
-### change volume levels of apps, speaker and microphone with your midi controler
+### change volume levels of apps, speakers and microphones with your midi controller
+### even running commands by pressing button on your midi controller is possible
 
 > [!WARNING]
 > actually it **only** works on windows
