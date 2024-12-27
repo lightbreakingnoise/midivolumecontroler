@@ -37,4 +37,4 @@ there is a text entry field where you can enter app to start (with parameters if
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
 # screenshot
-![screenshot](/screenshot_004.png?raw=true)
+![screenshot](/screenshot_005.png?raw=true)
