@@ -8,7 +8,8 @@ you can install it with [chocolatey](https://chocolatey.org/install)
 
 ```Shell
 choco install python -y
-```enter this in administrator terminal
+```
+enter this in administrator terminal
 
 or just go to [python.org](https://www.python.org/), then download and install the setup (tick "add python.exe to path")
 
@@ -16,7 +17,8 @@ after setup, my midivolumecontroler needs a few python libraries
 
 ```Shell
 pip install tk tkextrafont mido pygame comtypes pycaw
-```enter this in administrator terminal
+```
+enter this in administrator terminal
 
 # use it
 as soon as it has started, with your default midi controler, you should see output/input devices and sound producing apps. Just click in one of these lines, it should go red, then turn a knob/fader and it should go green. you can now change it's volume with this knob/fader. just right click in one line to remove a link.
