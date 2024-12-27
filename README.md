@@ -43,7 +43,7 @@ after python is installed correctly, my midivolumecontroller needs a few python 
 ## credits
 > [KillerBOSS2019](https://github.com/KillerBOSS2019)<br>
 > [kdschlosserfor](https://github.com/kdschlosser)<br>
-> for the [policyconfig.py](/app/policyconfig.py) file.<br>
+> for the [policyconfig.py](/app/policyconfig.py) file.
 when you give [RetroBar](https://github.com/dremin/RetroBar) a try, you can see last volume change in your taskbar via window title.
 
 <br>
