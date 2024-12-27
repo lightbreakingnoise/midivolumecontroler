@@ -122,7 +122,8 @@ class Controller:
         if typ == "app":
             snd.change_app_vol(con, val)
             gui.updateentry(ntry)
-            gui.win.title(f"{ival} {con}")
+            xival = max(0, ival-1)
+            gui.win.title(f"{xival} {con}")
             gui.rstcount = 50
         if typ == "script" and val > 63:
             sp.Popen(shlex.split(con))
@@ -321,6 +322,12 @@ class GUI:
         # init = True if this is initialized
         self.entrys = []
         self.chentry = None
+
+        self.savedir = os.getenv("HOMEDRIVE") + os.getenv("HOMEPATH")
+        savedir = os.path.join(self.savedir, "midivolctrl")
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        self.savedir = savedir
         self.load()
 
     def onexpose(self, e):
@@ -445,7 +452,8 @@ class GUI:
 
     def load(self):
         try:
-            f = open("mivoco.json", "r")
+            fname = os.path.join(self.savedir, "midivolctrl.json")
+            f = open(fname, "r")
             self.entrys = json.loads(f.read())
             f.close()
             for entry in self.entrys:
@@ -463,7 +471,8 @@ class GUI:
                 if tmpntry["init"]:
                     entrys.append(tmpntry)
             
-            f = open("mivoco.json", "w")
+            fname = os.path.join(self.savedir, "midivolctrl.json")
+            f = open(fname, "w")
             f.write(json.dumps(entrys))
             f.close()
         except:
