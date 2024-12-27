@@ -1,4 +1,4 @@
-# midivolumecontroler
+# midivolumecontroller
 ### change volume levels of apps, speaker and microphone with your midi controler
 
 > [!WARNING]
@@ -17,7 +17,7 @@ or you can install it regular
 > just go to [python.org](https://www.python.org/),<br>
 > then download and install the setup (tick _"add python.exe to path"_)
 
-after setup, my midivolumecontroler needs a few python libraries<br>
+after python is installed correctly, my midivolumecontroller needs a few python libraries<br>
 > ```Shell
 > pip install tk tkextrafont mido pygame comtypes pycaw
 > ```
