@@ -3,7 +3,7 @@ change volume levels of apps, speaker and microphone with your midi controler
 
 actually it only works on windows
 
-it needs python!
+it needs python!<br>
 you can install it with [chocolatey](https://chocolatey.org/install)
 
 ```Shell
