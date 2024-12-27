@@ -58,8 +58,6 @@ class Controller:
                             entry["init"] = True
                             gui.save()
                         if pre == "n":
-                            if gui.chmode == "vol":
-                                entry["trigger"] = f"n{msg.note}"
                             if gui.chmode == "std":
                                 entry["sectrig"] = f"n{msg.note}"
                             entry["init"] = True
@@ -71,10 +69,6 @@ class Controller:
                         if int(ntrig[1:]) == msg.control:
                             entry["value"] = msg.value
                             self.triggercmd(entry, sound, gui, "vol")
-                    if ntrig.startswith("n") and msg.type == "note_on":
-                        if int(ntrig[1:]) == msg.note:
-                            if ntype != "app":
-                                self.triggercmd(entry, sound, gui, "vol")
 
                     # check if this entry has a secondary trigger
                     if "sectrig" in entry:
