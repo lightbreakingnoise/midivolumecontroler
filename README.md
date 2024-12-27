@@ -4,12 +4,12 @@
 > [!NOTE]
 > actually it only works on windows
 
-it needs python!<br>
-you can install it with [chocolatey](https://chocolatey.org/install)<br>
-```Shell
-choco install python -y
-```
-enter this in administrator terminal
+> it needs python!<br>
+> you can install it with [chocolatey](https://chocolatey.org/install)<br>
+> ```Shell
+>choco install python -y
+>```
+>enter this in administrator terminal
 
 or just go to [python.org](https://www.python.org/), then download and install the setup (tick "add python.exe to path")
 
