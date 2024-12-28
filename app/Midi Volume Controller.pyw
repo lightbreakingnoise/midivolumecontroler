@@ -289,29 +289,29 @@ class GUI:
 
         self.chmode = "vol"
         self.question = tk.Frame(self.win, bg=gc.fieldback)
-        self.question.pack(fill=tk.X, pady=8)
+        self.question.pack(fill=tk.X)
         self.question.grid_columnconfigure((0,1), weight=1)
         # grid_columnconfigure makes content centered
         # in grid sticky=ew makes content stretched left and right
         self.answerstd = tk.Button(self.question, text="make standard", command=self.setstdmode,
-            font=self.mainfont, border=4)
+            font=self.mainfont, border=4, bg=gc.stdbutton)
         self.answerstd.grid(column=0, row=0, sticky="ew")
         self.answervol = tk.Button(self.question, text="✓ change volume ✓", command=self.setvolmode,
-            font=self.mainfont, border=4)
+            font=self.mainfont, border=4, bg=gc.volbutton)
         self.answervol.grid(column=1, row=0, sticky="ew")
         self.speakers = tk.Frame(self.win)
-        self.speakers.pack(fill=tk.X, pady=1)
+        self.speakers.pack(fill=tk.X)
         self.microphones = tk.Frame(self.win)
-        self.microphones.pack(fill=tk.X, pady=6)
+        self.microphones.pack(fill=tk.X, pady=2)
         self.apps = tk.Frame(self.win)
-        self.apps.pack(fill=tk.X, pady=1)
+        self.apps.pack(fill=tk.X)
         self.scripts = tk.Frame(self.win)
-        self.scripts.pack(fill=tk.X, pady=6)
+        self.scripts.pack(fill=tk.X, pady=2)
         self.scripts.bind("<Expose>", self.onexpose)
         self.mkscript = tk.Entry(self.win, font=self.mainfont,
-            bg=gc.scripts, fg=gc.fieldback, border=8, relief=tk.FLAT)
+            bg=gc.entrycol, fg=gc.fieldback, border=8, relief=tk.FLAT)
         self.mkscript.bind("<Return>", lambda event : self.addscript())
-        self.mkscript.pack(fill=tk.X, pady=1)
+        self.mkscript.pack(fill=tk.X)
 
         # type = speaker, microphone, app, script
         # content = name of speaker, microphone, app OR the script to run
