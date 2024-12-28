@@ -386,7 +386,7 @@ class GUI:
         empty = ""
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
-            txt = "> " + ntry["content"][:80]
+            txt = "> " + ntry["content"][-80:]
             dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
@@ -426,7 +426,7 @@ class GUI:
         empty = ""
         txt = f"{ncont}{empty: <{ln}} {nval:3} [{empty:#<{numr}}{empty:_<{numu}}]"
         if ntype == "script":
-            txt = "> " + ntry["content"][:80]
+            txt = "> " + ntry["content"][-80:]
             dstframe = self.scripts
         if ntype == "microphone":
             dstframe = self.microphones
