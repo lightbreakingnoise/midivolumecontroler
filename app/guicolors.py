@@ -16,6 +16,7 @@ mkassi = "#ed4408"
 
 # text color of an entry assigned
 isassi = "#53ec53"
+isscriptassi = "#c3dec3"
 
 # text color of an entry is standard
 isstd = "#52cef4"
