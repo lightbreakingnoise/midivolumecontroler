@@ -6,7 +6,7 @@
 
 <br><br>
 > [!NOTE]
-> **it needs python!**
+> **it needs python!**<br>
 > dependencys need version 3.12
 
 you can install it with [chocolatey](https://chocolatey.org/install)<br>
