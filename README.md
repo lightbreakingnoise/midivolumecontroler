@@ -29,8 +29,8 @@ after python is installed correctly, my midivolumecontroller needs a few python 
 <br><br>
 ## use it
 > as soon as it has started, choose your midi controler, then you should see output/input devices and sound producing apps.<br>
-> Just click in one of these lines, on the icon for mute/unmute, on the name for make standart and on the volume for volume,<br>
-> it should go red, then turn a knob/fader and it should go green.<br>
+> Just click in one of these lines, on the icon for mute/unmute, on the name for make standart<br>
+> and on the volume bar for change volume, it should go red, then turn a knob/fader and it should go green.<br>
 > you can now change it's volume with this knob/fader. just right click in one line to remove an assignment.
 
 > update:<br>
