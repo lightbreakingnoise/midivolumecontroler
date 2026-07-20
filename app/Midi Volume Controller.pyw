@@ -214,9 +214,11 @@ class WinSound:
             volume = self.app_sessions[appname]
             if volume:
                 if changeit:
-                    volume.SetMasterVolume(int(value / 1.27) / 100, None)
+                    volume.SetMasterVolume(value / 127.0, None)
                 else:
-                    return int(volume.GetMasterVolume() * 127.0)
+                    out = volume.GetMasterVolume()
+                    print(out)
+                    return int(round(out * 127.0))
         except:
             pass
         
