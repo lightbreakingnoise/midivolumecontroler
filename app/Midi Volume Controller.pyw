@@ -217,7 +217,6 @@ class WinSound:
                     volume.SetMasterVolume(value / 127.0, None)
                 else:
                     out = volume.GetMasterVolume()
-                    print(out)
                     return int(round(out * 127.0))
         except:
             pass
@@ -305,7 +304,7 @@ class WinSound:
 
     def listapps(self, gui):
         self.app_sessions.clear()
-        
+
         sessions = caw.AudioUtilities.GetAllSessions()
         for session in sessions:
             volume = session._ctl.QueryInterface(caw.ISimpleAudioVolume)
@@ -327,6 +326,15 @@ class WinSound:
                     d = {"type": "app", "content": appname,
                          "trigger": "", "value": value, "std": False, "init": False}
                     gui.addentry(d)
+
+        todels = []
+        for ntry in gui.entrys:
+            if ntry["type"] == "app" and ntry["content"] not in self.app_sessions.keys():
+                todels.append(ntry)
+
+        for t in todels:
+            gui.removeentry(t)
+
         gui.win.after(1000, lambda : self.listapps(gui))
 
 class GUI:
@@ -444,7 +452,7 @@ class GUI:
     def checkpos(self, event):
         self.win.title(f"X={event.x}")
         self.rstcount = 50
-    
+
     def updateentry(self, ntry):
         nmut = 0
         if "mut" in ntry:
